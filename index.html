@@ -206,7 +206,7 @@
             const textError = document.getElementById('textError');
             
             // Fixed API settings
-            const apiUrl = 'http://13.60.225.245/webhook/3acf85df-1dac-420a-a88c-960b2211d4a8';
+            const apiUrl = 'https://13.60.225.245/webhook/3acf85df-1dac-420a-a88c-960b2211d4a8';
             const httpMethod = 'POST';
             
             console.log('=== FORM DEBUG ===');
@@ -250,7 +250,8 @@
                 const response = await fetch(apiUrl, {
                     method: httpMethod,
                     headers: headers,
-                    body: JSON.stringify(requestBody)
+                    body: JSON.stringify(requestBody),
+                    mode: 'cors'
                 });
 
                 console.log('=== RESPONSE DEBUG ===');
@@ -289,12 +290,25 @@
                 }
             } catch (error) {
                 console.error('Network error:', error);
-                resultDiv.innerHTML = `
-                    <div class="error">
-                        ❌ Ошибка сети!<br>
-                        <small>${error.message}</small>
-                    </div>
-                `;
+                
+                if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CERT')) {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Ошибка SSL сертификата!<br>
+                            <small>Нужно принять сертификат сервера</small><br>
+                            <a href="https://13.60.225.245/webhook/3acf85df-1dac-420a-a88c-960b2211d4a8" target="_blank" style="color: #667eea; text-decoration: underline;">
+                                Нажми сюда, прими сертификат и попробуй снова
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Ошибка сети!<br>
+                            <small>${error.message}</small>
+                        </div>
+                    `;
+                }
             } finally {
                 // Reset button state
                 submitBtn.disabled = false;
