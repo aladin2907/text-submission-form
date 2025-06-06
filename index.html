@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Submission Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input[type="password"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .success {
+            color: #27ae60;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .api-config {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .api-config input {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Password Protection -->
+        <div id="passwordForm">
+            <h1>🔐 Вход</h1>
+            <div class="form-group">
+                <label for="password">Введите пароль:</label>
+                <input type="password" id="password" placeholder="Пароль для доступа">
+                <div id="passwordError" class="error"></div>
+            </div>
+            <button class="btn" onclick="checkPassword()">Войти</button>
+        </div>
+
+        <!-- Main Form -->
+        <div id="mainForm" class="hidden">
+            <h1>📝 Отправка текста</h1>
+            
+            <!-- API Configuration -->
+            <div class="api-config">
+                <h3 style="margin-bottom: 15px; color: #333;">Настройки API</h3>
+                <input type="url" id="apiUrl" value="https://13.60.225.245/webhook/3acf85df-1dac-420a-a88c-960b2211d4a8" placeholder="URL API" style="margin-bottom: 10px;">
+                <input type="text" id="apiKey" placeholder="API ключ (если нужен)" style="margin-bottom: 10px;">
+                <select id="httpMethod" style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 16px;">
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="PATCH">PATCH</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="textInput">Ваш текст:</label>
+                <textarea id="textInput" placeholder="Введите текст для отправки..."></textarea>
+                <div id="textError" class="error"></div>
+            </div>
+
+            <button class="btn" onclick="submitText()" id="submitBtn">
+                Отправить
+            </button>
+            
+            <div id="result" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Simple password protection
+        const PASSWORD = 'admin123'; // Измени на свой пароль
+
+        function checkPassword() {
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('passwordError');
+            
+            if (password === PASSWORD) {
+                document.getElementById('passwordForm').classList.add('hidden');
+                document.getElementById('mainForm').classList.remove('hidden');
+                errorDiv.textContent = '';
+            } else {
+                errorDiv.textContent = 'Неверный пароль!';
+                document.getElementById('password').value = '';
+            }
+        }
+
+        // Handle Enter key for password
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        async function submitText() {
+            const textInput = document.getElementById('textInput');
+            const apiUrl = document.getElementById('apiUrl').value;
+            const apiKey = document.getElementById('apiKey').value;
+            const httpMethod = document.getElementById('httpMethod').value;
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+            const textError = document.getElementById('textError');
+            
+            // Clear previous messages
+            textError.textContent = '';
+            resultDiv.innerHTML = '';
+            
+            // Validation
+            if (!textInput.value.trim()) {
+                textError.textContent = 'Пожалуйста, введите текст!';
+                return;
+            }
+            
+            if (!apiUrl.trim()) {
+                resultDiv.innerHTML = '<div class="error">Пожалуйста, укажите URL API!</div>';
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span>Отправляем...';
+
+            try {
+                // Prepare request
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+                
+                if (apiKey.trim()) {
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                    // или headers['X-API-Key'] = apiKey; - в зависимости от API
+                }
+
+                const requestBody = {
+                    text: textInput.value.trim(),
+                    timestamp: new Date().toISOString()
+                };
+
+                console.log('Sending request to:', apiUrl);
+                console.log('Method:', httpMethod);
+                console.log('Headers:', headers);
+                console.log('Body:', requestBody);
+
+                const response = await fetch(apiUrl, {
+                    method: httpMethod,
+                    headers: headers,
+                    body: JSON.stringify(requestBody)
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
+                if (response.ok) {
+                    const responseData = await response.text();
+                    console.log('Response data:', responseData);
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Текст успешно отправлен!<br>
+                            <small>Статус: ${response.status} ${response.statusText}</small>
+                        </div>
+                    `;
+                    
+                    // Clear the form
+                    textInput.value = '';
+                } else {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            ❌ Ошибка отправки!<br>
+                            <small>Статус: ${response.status} ${response.statusText}</small><br>
+                            <small>${errorText || 'Неизвестная ошибка'}</small>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Ошибка сети!<br>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Отправить';
+            }
+        }
+
+        // Handle Enter key for text submission (Ctrl+Enter)
+        document.getElementById('textInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                submitText();
+            }
+        });
+    </script>
+</body>
+</html> 
