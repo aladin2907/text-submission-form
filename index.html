@@ -140,17 +140,7 @@
             to { transform: rotate(360deg); }
         }
 
-        .api-config {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border: 1px solid #e9ecef;
-        }
 
-        .api-config input {
-            margin-bottom: 10px;
-        }
     </style>
 </head>
 <body>
@@ -169,18 +159,6 @@
         <!-- Main Form -->
         <div id="mainForm" class="hidden">
             <h1>📝 Отправка текста</h1>
-            
-            <!-- API Configuration -->
-            <div class="api-config">
-                <h3 style="margin-bottom: 15px; color: #333;">Настройки API</h3>
-                <input type="url" id="apiUrl" value="https://13.60.225.245/webhook/3acf85df-1dac-420a-a88c-960b2211d4a8" placeholder="URL API" style="margin-bottom: 10px;">
-                <input type="text" id="apiKey" placeholder="API ключ (если нужен)" style="margin-bottom: 10px;">
-                <select id="httpMethod" style="width: 100%; padding: 15px; border: 2px solid #e1e5e9; border-radius: 10px; font-size: 16px;">
-                    <option value="POST">POST</option>
-                    <option value="PUT">PUT</option>
-                    <option value="PATCH">PATCH</option>
-                </select>
-            </div>
 
             <div class="form-group">
                 <label for="textInput">Ваш текст:</label>
@@ -223,12 +201,13 @@
 
         async function submitText() {
             const textInput = document.getElementById('textInput');
-            const apiUrl = document.getElementById('apiUrl').value;
-            const apiKey = document.getElementById('apiKey').value;
-            const httpMethod = document.getElementById('httpMethod').value;
             const submitBtn = document.getElementById('submitBtn');
             const resultDiv = document.getElementById('result');
             const textError = document.getElementById('textError');
+            
+            // Fixed API settings
+            const apiUrl = 'https://13.60.225.245/webhook/3acf85df-1dac-420a-a88c-960b2211d4a8';
+            const httpMethod = 'POST';
             
             // Clear previous messages
             textError.textContent = '';
@@ -237,11 +216,6 @@
             // Validation
             if (!textInput.value.trim()) {
                 textError.textContent = 'Пожалуйста, введите текст!';
-                return;
-            }
-            
-            if (!apiUrl.trim()) {
-                resultDiv.innerHTML = '<div class="error">Пожалуйста, укажите URL API!</div>';
                 return;
             }
 
@@ -254,11 +228,6 @@
                 const headers = {
                     'Content-Type': 'application/json',
                 };
-                
-                if (apiKey.trim()) {
-                    headers['Authorization'] = `Bearer ${apiKey}`;
-                    // или headers['X-API-Key'] = apiKey; - в зависимости от API
-                }
 
                 const requestBody = {
                     text: textInput.value.trim(),
